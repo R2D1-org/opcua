@@ -209,7 +209,7 @@ impl Client {
         let server_url = endpoint.endpoint_url.as_ref();
 
         let server_endpoints = self
-            .get_server_endpoints_from_url(format!("{}{}", server.config.server.clone(), "/discovery"))
+            .get_server_endpoints_from_url(format!("{}{}", server_url, "/discovery"))
             .await
             .map_err(|status_code| {
                 error!("Cannot get endpoints for server, error - {}", status_code);
