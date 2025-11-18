@@ -197,6 +197,52 @@ impl Client {
             .unwrap())
     }
 
+    #[cfg(feature = "ignition")]
+    pub async fn new_session_ignition_from_endpoint(
+        &mut self,
+        endpoint: impl Into<EndpointDescription>,
+        user_identity_token: IdentityToken,
+    ) -> Result<(Arc<Session>, SessionEventLoop), StatusCode> {
+        let endpoint = endpoint.into();
+
+        // Get the server endpoints
+        let server_url = endpoint.endpoint_url.as_ref();
+
+        let server_endpoints = self
+            .get_server_endpoints_from_url(server_url)
+            .await
+            .map_err(|status_code| {
+                error!("Cannot get endpoints for server, error - {}", status_code);
+                status_code
+            })?;
+
+        // Find the server endpoint that matches the one desired
+        let security_policy = SecurityPolicy::from_str(endpoint.security_policy_uri.as_ref())
+            .map_err(|_| StatusCode::BadSecurityPolicyRejected)?;
+        let server_endpoint = Self::find_matching_endpoint(
+            &server_endpoints,
+            endpoint.endpoint_url.as_ref(),
+            security_policy,
+            endpoint.security_mode,
+        )
+        .ok_or(StatusCode::BadTcpEndpointUrlInvalid)
+        .map_err(|status_code| {
+            error!(
+                "Cannot find matching endpoint for {}",
+                endpoint.endpoint_url.as_ref()
+            );
+            status_code
+        })?;
+
+        Ok(self
+            .new_session_from_info(SessionInfo {
+                endpoint: server_endpoint,
+                user_identity_token,
+                preferred_locales: Vec::new(),
+            })
+            .unwrap())
+    }
+
     /// Connects to an a server directly using provided [`SessionInfo`].
     ///
     /// This function returns both a reference to the session, and a `SessionEventLoop`. You must run and

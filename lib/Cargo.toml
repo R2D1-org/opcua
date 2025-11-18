@@ -40,6 +40,8 @@ discovery-server-registration = ["client"]
 vendored-openssl = ["openssl/vendored"]
 # Servers might want to show a web server with metric / diagnostic info
 http = ["actix-files", "actix-web"]
+# Fix for ignition server
+ignition = []
 
 [dependencies]
 log = "0.4"
